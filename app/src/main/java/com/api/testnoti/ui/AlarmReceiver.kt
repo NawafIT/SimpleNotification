@@ -14,8 +14,11 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.api.testnoti.AlarmSchedule
+import com.api.testnoti.Constants
 import com.api.testnoti.MainActivity
 import com.api.testnoti.R
+import com.api.testnoti.sendNotification
 import java.util.*
 
 //class AlarmReceiver : BroadcastReceiver() {
@@ -51,80 +54,24 @@ import java.util.*
 //    }
 //}
 
-
 class AlarmReceiver : BroadcastReceiver() {
 
+    private lateinit var notificationManager: NotificationManager
+
+    private lateinit var alarmSchedule: AlarmSchedule
     @RequiresApi(Build.VERSION_CODES.M)
     @SuppressLint("ServiceCast", "UnsafeProtectedBroadcastReceiver")
     override fun onReceive(context: Context, intent: Intent) {
         // Handle the notification logic here
-        val channelId = "notification_channel"
 
-        // Create a notification channel (required for Android Oreo and above)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                channelId,
-                "Notification Channel",
-                NotificationManager.IMPORTANCE_HIGH
-            )
-            val notificationManager =
-                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
+        val message = intent.getStringExtra(Constants.MESSAGE_ARG)?:"test message"
+        notificationManager = context.getSystemService(NotificationManager::class.java)
+        alarmSchedule = AlarmSchedule(context)
 
-        // Create the notification
-        val notificationBuilder = NotificationCompat.Builder(context, channelId)
-            .setContentTitle(intent.getStringExtra("Noti"))
-            .setContentText(intent.getStringExtra("Noti2"))
-            .setSmallIcon(R.drawable.ic_baseline_notifications_24)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-
-        // Show the notification
-        NotificationManagerCompat.from(context).notify(0, notificationBuilder.build())
-
+        notificationManager.sendNotification(context,message!!)
         // Schedule the next day's notification
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        val id = intent.getIntExtra("id",0)
-        val timeValue = intent.getStringExtra("time")
-        // Get the original PendingIntent from the intent
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            id,
-            intent,
-            PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val parts = timeValue?.split(":")
-        val hours = parts?.get(0)?.toInt()
-        val minutes = parts?.get(1)?.toInt()
-        // Calculate the time for the next day
-        val calendar = Calendar.getInstance().apply {
-            timeInMillis = System.currentTimeMillis()
-            add(Calendar.DAY_OF_YEAR, 1)
-            set(Calendar.HOUR_OF_DAY, hours!!) // Set the desired hour for the next day's notification
-            set(Calendar.MINUTE, minutes!!) // Set the desired minute for the next day's notification
-            set(Calendar.SECOND, 0)
-        }
-
-        // Set the next day's alarm using the updated time
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                calendar.timeInMillis,
-                pendingIntent
-            )
-        } else {
-            alarmManager.setExact(
-                AlarmManager.RTC_WAKEUP,
-                calendar.timeInMillis,
-                pendingIntent
-            )
-        }
+        alarmSchedule.reSchedule()
     }
 }
-
-
-
 
 
