@@ -25,12 +25,15 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.api.testnoti.ui.setNotification
 import com.api.testnoti.ui.theme.TestnotiTheme
+import kotlin.time.Duration.Companion.seconds
 
 
 class MainActivity : ComponentActivity() {
+
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val alarmSchedule = AlarmSchedule(this)
         setContent {
             var hasNotificationPermission by remember {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -57,15 +60,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-
-            val context = this
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Button(onClick = {
-                    setNotification(context, "4:13", "صلاة فجر", 0)
+                    val alarmItem = AlarmItem(
+                        15.seconds.inWholeMilliseconds,
+                        "test notification"
+                    )
+                    alarmSchedule.schedule(alarmItem)
                 }) {
                     Text(text = "click11")
                 }
@@ -74,4 +79,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+
 
